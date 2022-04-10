@@ -8,23 +8,27 @@ Read the accompanying article in 100-years.txt for more details.
 
 ## Usage
 
-tralector is two parts: one part shell script, one part program code. The shell
-script presents a nice user experience, while the program code handles the heavy
-lifting.
-
 Place urls, one per line, in `.tralector/urls`.
 
 Run `tralector --help` to see option descriptions.
 
 # Development
 
-To compile the program run:
+You will need the MLton Standard ML compiler. Please try to install it first if
+your operating system has a package manager, otherwise if you have internet
+access please visit http://www.mlton.org/. You will need a C compiler.
+
+To compile tralector enter this in the project directory:
 
 ```
 mlton -output main main.mlb
 ```
 
 # Design
+
+tralector is two parts: one part shell script, one part program code. The shell
+script presents a nice user experience, while the program code handles the heavy
+lifting.
 
 tralector will read the list of URLs and fetch each one, one after the other. It
 will keep track of the time it took so that it can be more concurrent on
