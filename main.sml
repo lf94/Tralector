@@ -8,12 +8,12 @@ val HttpGetRaw = fn domain =>
     val toRawSlice = Word8VectorSlice.full o Byte.stringToBytes
     val _          = Socket.sendVec (
       socket,
-      toRawSlice "\
+      toRawSlice ("\
       \GET / HTTP/1.1\n\
-      \Host: len.falken.directory\n\
+      \Host: " ^ domain  ^ "\n\
       \User-Agent: raw-socket\n\
       \Accept:*/*\r\n\r\n\
-      \"
+      \")
     )
     val response = Socket.recvVec (socket, 1024*1024*1024)
     val _        = Socket.close socket
@@ -32,6 +32,17 @@ val xml = (
 ) "len.falken.directory"
 val _ = print "\n"
 
+val outfile = "test.xml"
+
+val _ = let
+  val os = TextIO.openOut outfile
+in
+  TextIO.output(os, xml);
+  TextIO.closeOut os
+end
+
+val printTag = UniChar.Vector2String o UniChar.Data2Vector
+
 structure TralectorHooks =
   struct
     open IgnoreHooks
@@ -46,6 +57,7 @@ structure TralectorHooks =
     fun hookStartTag (appData, startTagInfo) = let
         val (_, _, _, tagName, _) = startTagInfo
       in
+        print (printTag tagName);
         tagName :: appData
       end
   end
@@ -64,15 +76,8 @@ structure TralectorParse :
     fun parse uri = Parser.parseDocument (SOME(Uri.String2Uri uri)) NONE TralectorHooks.appStart
   end
 
-val _ = let
-  val os = TextIO.openOut "test.xml"
-in
-  TextIO.output(os, xml);
-  TextIO.closeOut os
-end
-
-val tags = TralectorParse.parse "./test.xml"
+val tags = TralectorParse.parse outfile
 val _ = print (
-  (UniChar.Vector2String o UniChar.Data2Vector)
+  printTag
   (List.foldl (fn (a,b) => List.concat [a,b]) [] tags)
 )
