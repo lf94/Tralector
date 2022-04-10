@@ -1,0 +1,16 @@
+url-encode-1: OK
+url-encode-2: OK
+url-decode-1: OK
+url-decode-2: OK
+url-decode-3: OK
+url-decode-4: OK
+url-decode-5: OK
+url-deencode: OK
+url-deencode: OK
+url-deencode: OK
+url-deencode: OK
+MPFD: length(l) = 2
+name=file; filename=test1.mlb; size(content)=76
+name=file; filename=test2.out.ok; size(content)=62
+dataFromString-1: OK
+dataFromString-2: OK

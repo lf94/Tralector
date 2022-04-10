@@ -1,0 +1,10 @@
+local
+  $(SML_LIB)/basis/basis.mlb
+  ../sml-parse/scan-util.mlb
+  http-mime.sml
+  http-status.sml
+  http-util.sml
+in
+  http.sig
+  http.sml
+end
