@@ -1,0 +1,16 @@
+ann
+  "nonexhaustiveMatch warn"
+  "sequenceNonUnit warn"
+in
+  local
+    $(SML_LIB)/basis/basis.mlb
+    ../../fxlib.mlb
+  in
+    copyOptions.sml
+    copyEncode.sml
+    copyOutput.sml
+    copyHooks.sml
+    copy.sml
+    ../../Util/main.sml
+  end
+end

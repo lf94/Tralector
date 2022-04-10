@@ -1,0 +1,15 @@
+ann
+  "warnMatch true"
+  "sequenceUnit true"
+in
+  local
+    $(SML_LIB)/basis/basis.mlb
+    ../../fxlib.mlb
+  in
+    nullOptions.sml
+    nullHooks.sml
+    nullHard.sml
+    null.sml
+    ../../Util/main.sml
+  end
+end

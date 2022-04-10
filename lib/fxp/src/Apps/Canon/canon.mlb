@@ -1,0 +1,16 @@
+ann
+  "nonexhaustiveMatch warn"
+  "sequenceNonUnit warn"
+in
+  local
+    $(SML_LIB)/basis/basis.mlb
+    ../../fxlib.mlb
+  in
+    canonOptions.sml
+    canonEncode.sml
+    canonOutput.sml
+    canonHooks.sml
+    canon.sml
+    ../../Util/main.sml
+  end
+end
