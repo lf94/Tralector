@@ -57,9 +57,11 @@ structure TralectorHooks =
     fun hookStartTag (appData, startTagInfo) = let
         val (_, _, _, tagName, _) = startTagInfo
       in
-        print (printTag tagName);
         tagName :: appData
       end
+
+    (* Must be declared otherwise nothing is returned?...                     *)
+    fun hookFinish (appData) = appData
   end
 
 structure TralectorParse :
