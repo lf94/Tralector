@@ -27,11 +27,13 @@ then start the second fetch.
 
 Data is stored in a single file, .tralector/db, the format for each entry is:
 
+```
 <url>\n
 <title>\n
 <datetime>\n
 <content>\n
 \n
+```
 
 Due to the timing nature of feeds, and in an age with lots of memory, the file
 should be entirely read into memory so that entries can be sorted and presented
