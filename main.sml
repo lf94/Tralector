@@ -30,9 +30,8 @@ val xml = (
   o CharVectorSlice.full
   o HttpGetRaw
 ) "len.falken.directory"
-val _ = print "\n"
 
-val outfile = "test.xml"
+val outfile = "/home/lee/Code/lee/Tralector/test.xml"
 
 val _ = let
   val os = TextIO.openOut outfile
@@ -41,27 +40,19 @@ in
   TextIO.closeOut os
 end
 
-val printTag = UniChar.Vector2String o UniChar.Data2Vector
-
+val toString = UniChar.Vector2String o UniChar.Data2Vector
 structure TralectorHooks =
   struct
     open IgnoreHooks
 
     (* Data held onto while parsing the document                              *)
-    type AppData = UniChar.Data list
+    type AppData = int list
     (* What the final return data should be - same as the AppData             *)
     type AppFinal = AppData
     val appStart = []
 
     (* Hook functions are basically (state, info) -> state                    *)
-    fun hookStartTag (appData, startTagInfo) = let
-        val (_, _, _, tagName, _) = startTagInfo
-      in
-        tagName :: appData
-      end
-
-    (* Must be declared otherwise nothing is returned?...                     *)
-    fun hookFinish (appData) = appData
+    fun hookStartTag (appData, (_, elId, _, _, _)) = elId :: appData
   end
 
 structure TralectorParse :
@@ -78,8 +69,8 @@ structure TralectorParse :
     fun parse uri = Parser.parseDocument (SOME(Uri.String2Uri uri)) NONE TralectorHooks.appStart
   end
 
-val tags = TralectorParse.parse outfile
+val tags : int list = TralectorParse.parse outfile
 val _ = print (
-  printTag
-  (List.foldl (fn (a,b) => List.concat [a,b]) [] tags)
+  List.foldl (fn (tag, acc) => Int.toString tag ^ " " ^ acc) "" tags
+  ^ "\n"
 )

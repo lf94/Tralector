@@ -1,0 +1,445 @@
+IM READY: LET THE 100 YEAR PROGRAMS BEGIN.
+Exploring Standard ML's robustness to time and interoperability
+
+PREFACE
+
+For awhile now, ever since I've become proficient with programming (which took
+about a decade), I've reflected on why exactly I had such a hard time. This also
+comes from helping my cousin-in-law who is learning programming and giving them
+advice. I realize that at the end of the day, programming sucks for these
+reasons:
+
+* Hard to reason syntax
+* Hard to reason execution
+* No clear path to combining other people's programs
+* Constant change or recommendations on how to write idiomatic code
+* Too many languages to know what to use or what is sensible to use
+
+Let's focus on the languages I use day to day, as I used them for work, and
+consider them the languages I like the most while still finding them have the
+above problems.
+
+JavaScript/TypeScript I believe is a very good contender to the issues above.
+The issue with the language(s) is that they have changed way too much over the
+years, and idiomatic ES5 is way different from ES2021. On top of this you
+effectively have to learn 2 other languages to write UIs (HTML and CSS), and
+once you do, you're told that JSX and React are the better way to do it. Then
+you're off to fighting with webpack.
+
+I think if the community decided on very tight integration with web components,
+and removed html and css entirely, the JS story could become extremely nice.
+
+It would also be nice if JS extensions could just stop, and instead be provided
+by the community or as a standard library, instead of language features.
+
+Really I like JS (TS) the most as a "more widely accepted" contender for 100
+year programs.
+
+Then there's Rust. I like Rust, but it suffers from difficult reasoning
+in both syntax and execution (see: async), and language feature extensions. Rust
+is simply too much of a moving target as well to write 100 year programs. 
+Already there are Rust programs written in the past which will not run today.
+
+I love Rust for work, and for writing programs which need to squeeze resources,
+and remain efficient, but that's it. 
+
+Of those two, they have the code combining problem figured out - Rust more so.
+It is too often an npm package just doesn't work because it has to be used a
+certain way.
+
+All this has lead me on a journey to find the "100 year language". After being
+a programmer now for some time, I cannot deny that functional programming (not
+pure functional programming) is the best for reasoning, both for syntax and
+execution. FPs generally start with an axiomatic core, and standard libraries
+are included. It's because of this actually that I *didnt* choose Haskell. 
+People use GHC extensions much too heavily, and thus idiomatic Haskell changes
+over time. This is why "boring Haskell" has taken in popularity over the years,
+and would we great if it were standardized more heavily, and see more compilers
+exist.
+
+Before asking around, Scheme seemed like the perfect contender. My issue with
+Scheme though are the myriad of implementations, and it really is hard to wrap
+your head around all the parens. Yeah if you've worked in Scheme for awhile it's
+"no problem", and I've done some Scheme too, but every time I have to go back to
+it, it's re-learning experience which is not acceptable. Regardless this was
+going to be my choice for a 100 year language.
+
+Then I was introduced to Standard ML.
+
+This is a language I wish I was pointed to and forced to learn.
+
+Standard ML checks all the boxes.
+
+Standard ML even has a good type system - something I was willing to live
+without.
+
+Standard ML even compiles programs to *small* binaries.
+
+Standard ML has easy to use FFI.
+
+It was everything I wanted and more.
+
+After a bit of investigation I was fully convinced I need to take Standard ML
+for a test drive. 8 hours from initial exposure, I was able to combine 25 year
+old code, with 6 year old code, effortlessly. This includes learning the syntax
+and execution of the language. I don't know of any other language where this
+is possible.
+
+This is a recording of my journey to determine if this language can be used well
+beyond a few lifetimes, and most importantly my own.
+
+If you've made it this far, thank you for showing interest. All I ask now is
+if you write a program which you expect to last a long time, could you please
+tag it or describe it as a "100 year" program? :)
+
+To be clear, a 100 year program should:
+
+* Have vendored dependencies
+* Be sufficiently easy to reason about
+  * Syntax, execution, algorithms, code structure
+* Must justify how it can compile itself for 100 years, i.e. compiler uses C,
+FORTRAN, LISP, whatever - something which has already existed for a sufficient
+amount of time. Even an ES5 JS interpreter is ok but must be restricted to ES5.
+
+There is no discussion about licensing: laws change over time. Your program
+should live "outside the law" in that you should expect your program to be
+copied and modified in any and all fashions, and even expect your name to be
+scrubed from it over time. Essentially if that happens you have succeeded in
+creating a living code organism. Your code will live in nature, not society.
+
+And that's it! The rest of the article is my 100 year program exploration with
+Standard ML. You can find the final result (which is most likely not done by
+the time you read this article) here: https://github.com/lf94/Tralector
+
+
+THE BENCHMARK PROJECT
+
+As a test I'll be writing a basic RSS feed fetcher. The only two components
+needed are an XML parser and HTTP client. 
+
+https://github.com/cannam/fxp - XML package written in 1999
+https://github.com/diku-dk/sml-http - HTTP package written in 2015
+
+These are the two packages I found immediately for what I needed. I'm testing if
+they will "just work" with SMLNJ (an SML compiler) or not.
+
+This test means a lot: if it succeeds, SML has given evidence that it's robust
+against time.
+
+  mkdir Code/Tralector
+
+Let's go!
+
+
+DISCOVERY OF SMLPKG
+
+When looking how to use sml-http, I discovered that diku-dk is quite involved in
+the SML community. They have created a package manager called smlpkg which uses
+GitHub and GitLab as package repositories to share code.
+
+So first thing is first, building smlpkg!
+
+  $ git clone https://github.com/diku-dk/smlpkg.git
+  $ cd smlpkg
+  $ time MLCOMP=mlton make clean all
+
+  real  0m5.413s
+
+It built quite fast!
+
+Now I go to my project's directory (Code/Tralector) and run
+
+  smlpkg add github.com/diku-dk/sml-http
+
+
+FXP
+
+At this point I'm still confused about how to generally include packages into
+my code, and fxp looks harder to use than sml-http because it existed much
+before the smlpkg package manager came into being.
+
+From what I understand, the easiest thing to do is include the whole project
+in my project. Then I looked at documentation on the module system. An
+interesting quote from riccardo's notes-011001.pdf from cs.cornell.edu:
+
+  The SML language is made up of two sublanguages: the core language, covered
+  in the previous chapter, which is in charge of the actual code, and the module
+  language, which is in charge of packaging elements of the core language into
+  coherent units for modularity and reuse
+
+After about 10 minutes of reading, all it told me was to use `open <module>`
+to bring declarations to the top-level. Ok!
+
+Oh that also there are 3 types of code "chunks": signatures (interfaces),
+structures (classes), and functors (convert between structures). It seems you'd
+generally write the structure first, then the signature second, depending on the
+complexity. If it's simpler you'd probably do it the other way around first.
+
+As long as the compiler has all the files it needs as arguments, the module
+system should work... Quite easy to reason about.
+
+I digress; I add fxp as a git submodule for easy vendoring and move on.
+
+
+THE FIRST TEST
+
+As a first test, let's try to use the sml-http package:
+
+  open HTTP
+  val _ = print "ok"
+
+...and it can't find HTTP, naturally.
+
+                    Goes to find more documentation...
+
+Apparently the "Compilation Management" system is what needs to be understood.
+
+I highly recommend everyone to read http://www.smlnj.org/doc/CM/new.pdf if
+you're going to program in Standard ML. It essentially describes `make` but it's
+basically better in every way.
+
+Each implementation has its own "Compilation Management". Since MLton is the
+other popular implementation, let's check it out... Oh nice, they have a tool
+which converts between the two! http://www.mlton.org/CompilationManager
+http://www.mlton.org/MLBasis
+
+So in SMLNJ they are called "compilation manager files" (cm) and in MLton they
+are called "ML basis" files (mlb).
+
+Because mlb are an overall improvement and easier to work with for someone
+starting, that's what I'm going with.
+
+The layout of an mlb is simple:
+
+  lib1.mlb
+  ...
+  libn.mlb
+
+  file1.sml
+  ...
+  filen.sml
+
+And that's it. When compiling all you do is then:
+
+  mlkit -output main main.mlb
+
+...and that did it!
+
+  ::::::::::::::
+  main.mlb
+  ::::::::::::::
+  $(SML_LIB)/basis/basis.mlb
+  lib/github.com/diku-dk/sml-http/http.mlb
+
+  main.sml
+  ::::::::::::::
+  main.sml
+  ::::::::::::::
+  open Http
+  val _ = print "ok"
+
+Now I'll try including fxp - someone already included a translated mlb from the
+cm file so it should just work too.
+
+                          Goes to try it...
+
+                    10 minutes later still trying...
+
+Well I'm able to import CatData at least, but none of the XML parsing functions.
+
+                    After 20 more minutes, I go for supper.
+
+        ...I return after literally finally beating Elden Ring, 12:45am...
+
+Well it looks like I misunderstood how `Parse` was supposed to be used. It turns
+out everything is importing just fine (ever since the CatData moment).
+
+Using this 20+ year old XML library involved zero changes, and "just works" with
+today's code. I would say, this is a great success so far.
+
+
+THE SECOND TEST
+
+The second test is making an HTTP request to my website, followed by parsing
+the RSS XML which is received. Unfortunately (maybe?) sml-http does not handle
+any actual network behavior - only the HTTP parsing, so I will need to learn
+how to open a socket first.
+
+Seems to mimic the typical socket interface:
+https://smlfamily.github.io/Basis/socket.html
+
+And since we include "basis" in our mlb (recheck above), we have access to this
+with a simple `open Socket`!
+
+Now I'll have to take some time to learn how to use the socket interface, and
+understand how a few things piece together, so I'll leave it here for tomorrow.
+
+                                The next day...
+
+Ok, I've better memorized the syntax and semantics of everything; here's a
+working example of downloading with a socket:
+
+  ::::::::::::::
+  main.sml
+  ::::::::::::::
+  (* Uses INetSock, Socket, NetHostDB, Word8VectorSlice and Byte modules    *)
+  (* It is possible to "lift" them into the basis (top level)               *)
+  val socket = INetSock.TCP.socket ()
+
+  (* o is ascii art for "function composition", like . in Haskell)          *)
+  val fromHostName = NetHostDB.addr o Option.valOf o NetHostDB.getByName
+
+  (* Creates an in_addr structure from a hostname                           *)
+  val host    = fromHostName "len.falken.directory"
+  val address = INetSock.toAddr (host, 80)
+  val _       = Socket.connect (socket, address)
+
+  val toRawSlice = Word8VectorSlice.full o Byte.stringToBytes
+  val _          = Socket.sendVec (
+    socket,
+    toRawSlice "\
+    \GET / HTTP/1.1\n\
+    \Host: len.falken.directory\n\
+    \User-Agent: raw-socket\n\
+    \Accept:*/*\n\n\
+    \"
+  )
+
+  val response = Socket.recvVec (socket, 1024*1024)
+  val _        = Socket.close socket
+
+  (* Print a part of the response (which will be XML).                      *)
+  val _ = print (Byte.bytesToString response)
+
+
+As you see, a bit verbose, but this is interacting directly with sockets. This
+could be wrapped up into a very nice "HTTP request" method easily, providing
+a much nicer experience:
+
+  HttpGetRaw "len.falken.directory"
+
+Next is to incorporate sml-http so the raw HTTP response can be used reasonably.
+
+Here is the source file now - pretty simple still - heavily using composition,
+a smidgen of pattern matching and option "unwrapping" (valOf) like in Rust:
+
+  ::::::::::::::
+  main.sml
+  ::::::::::::::
+  val HttpGetRaw = fn domain =>
+    let 
+      val socket = INetSock.TCP.socket ()
+      val fromHostName = NetHostDB.addr o Option.valOf o NetHostDB.getByName
+      val host    = fromHostName domain
+      val address = INetSock.toAddr (host, 80)
+      val _       = Socket.connect (socket, address)
+      val toRawSlice = Word8VectorSlice.full o Byte.stringToBytes
+      val _          = Socket.sendVec (
+        socket,
+        toRawSlice "\
+        \GET / HTTP/1.1\n\
+        \Host: len.falken.directory\n\
+        \User-Agent: raw-socket\n\
+        \Accept:*/*\n\n\
+        \"
+      )
+      val response = Socket.recvVec (socket, 1024*1024*1024)
+      val _        = Socket.close socket
+    in
+      Byte.bytesToString response
+    end
+
+  val _ = (
+      print
+    o Option.valOf
+    o #body
+    o (fn (v,s) => v)
+    o Option.valOf
+    o (Http.Response.parse CharVectorSlice.getItem)
+    o CharVectorSlice.full
+    o HttpGetRaw
+  ) "len.falken.directory"
+  val _ = print "\n"
+
+
+Now onto the final phase: parsing the `body` with fxp from 1999!
+
+After some investigation it seems that fxp is designed with the intent that
+developers will write hooks for certain parsing events, like when a `href`
+is encountered for example, or an arbitrary node. On top of this it seems they
+have no easy way to just pass text to the parser and return a tree back.
+
+For the sake of the experiment, I'll take the opportunity to write the XML to
+a temporary file, and then implement hooks to print each node the parser visits
+as it reads the file. I already looked for another SML package which does it
+the more familiar way (pass text, return a tree, query the tree), but still I
+continue with this path because there is a point to be proven!
+
+                  ...Some time later after learning fxp...
+
+Here it is! So it turns out getting the element names is not as trivial for
+some odd reason, so instead this program simply prints out an "element index"
+which refers to their names in another place (the DTD).
+
+Combine this portion with the code above and you'll be able to run it:
+
+  ::::::::::::::
+  main.sml
+  ::::::::::::::
+  val outfile = "/home/lee/Code/lee/Tralector/test.xml"
+
+  val _ = let
+    val os = TextIO.openOut outfile
+  in
+    TextIO.output(os, xml);
+    TextIO.closeOut os
+  end
+
+  val toString = UniChar.Vector2String o UniChar.Data2Vector
+  structure TralectorHooks =
+    struct
+      open IgnoreHooks
+
+      (* Data held onto while parsing the document                          *)
+      type AppData = int list
+      (* What the final return data should be - same as the AppData         *)
+      type AppFinal = AppData
+      val appStart = []
+
+      (* Hook functions are basically (state, info) -> state                *)
+      fun hookStartTag (appData, (_, elId, _, _, _)) = elId :: appData
+    end
+
+  structure TralectorParse :
+    sig
+      val parse : string -> TralectorHooks.AppFinal
+    end
+    = struct
+      structure Parser = Parse (
+        structure Dtd   = Dtd
+        structure Hooks = TralectorHooks
+        structure ParserOptions = ParserOptions ()
+        structure Resolve = ResolveNull
+      )
+      fun parse uri = Parser.parseDocument (SOME(Uri.String2Uri uri)) NONE
+        TralectorHooks.appStart
+    end
+
+  val tags : int list = TralectorParse.parse outfile
+  val _ = print (
+    List.foldl (fn (tag, acc) => Int.toString tag ^ " " ^ acc) "" tags
+    ^ "\n"
+  )
+
+With that, I'm very satisfied with the outcome.
+
+I look forward to others who begin to push "100 year" programs and other 
+"100 year" methods or evidence. I think this is a really important topic which
+no one has really brought to the forefront. If you have your own ideas please
+share with the rest of the Internet, and please reference the URL to this
+article in *your* article so I can easily find it with a search engine :)
+
+Read you later,
+
+-- Len
+
